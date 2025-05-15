@@ -39,27 +39,24 @@ pub async fn make_transaction() -> Result<()> {
         let bob: PrivateKeySigner = bob_private_key.parse()?;
         println!("Bob address and balance: {}", bob.address());
     
-        let provider = ProviderBuilder::new().wallet(bob.clone()).on_http(rpc_url.clone());
+        let provider = ProviderBuilder::new().wallet(alice.clone()).on_http(rpc_url.clone());
         println!("Alice's balance: {:?}", provider.get_balance(alice.address()).await?);
         println!("Bob's balance: {:?}", provider.get_balance(bob.address()).await?);
-    
-    
-        let delegate_address = address!("0x80296ff8d1ed46f8e3c7992664d13b833504c2bb");
-      
+
         // Create a contract instance.
         let wallet_call_contract = IWalletCore::new(address!("0x80296FF8D1ED46f8e3C7992664D13B833504c2Bb"), provider.clone());
     
+       
         // Create an authorization object for Alice to sign
         let authorization = Authorization {
-            chain_id: U256::from(11155111), // Sepolia chain ID
-            //address: *contract.address(),
-            address: delegate_address,
+            chain_id: U256::from(provider.get_chain_id().await?), // Sepolia chain ID
+            address: *wallet_call_contract.address(),
             nonce: provider.get_transaction_count(alice.address()).await?,
         };
     
         // Alice signs the authorization
         let signature = alice.sign_hash_sync(&authorization.signature_hash())?;
-        let signed_authorization = authorization.into_signed(signature);
+        let signed_authorization = authorization.clone().into_signed(signature);
     
         let receiver_address = std::env::var("RECEIVER_ADDRESS").expect("RECEIVER_ADDRESS must be set in .env file");
         let receiver = Address::from_str(&receiver_address).unwrap();
@@ -79,37 +76,47 @@ pub async fn make_transaction() -> Result<()> {
         println!("Pending initialize transaction... {}", pending_tx_init.tx_hash());
         let receipt_init = pending_tx_init.get_receipt().await?;
         println!("Initialize included in block {}", receipt_init.block_number.expect("Failed to get block number"));
+
+
+        //  // Create an authorization object for Alice to sign
+        // let authorization_for_transfer = Authorization {
+        //     chain_id: U256::from(provider.get_chain_id().await?), // Sepolia chain ID
+        //     address: *wallet_call_contract.address(),
+        //     nonce: provider.get_transaction_count(alice.address()).await?,
+        // };
     
-        let calls_following = vec![
-            IWalletCore::Call {
-                target: receiver,
-                value: U256::from(1000000000000u64),
-                data: Bytes::new(),
-            },
-            IWalletCore::Call {
-                target: receiver,
-                value: U256::from(2000000000000u64),
-                data: Bytes::new(),
-            }
-        ];
+        // // Alice signs the authorization
+        // let signature_for_transfer = alice.sign_hash_sync(&authorization_for_transfer.signature_hash())?;
+        // let signed_authorization_for_transfer = authorization_for_transfer.clone().into_signed(signature_for_transfer);   
+        // let calls_following = vec![
+        //     IWalletCore::Call {
+        //         target: receiver,
+        //         value: U256::from(1000000000000u64),
+        //         data: Bytes::new(),
+        //     },
+        //     IWalletCore::Call {
+        //         target: receiver,
+        //         value: U256::from(2000000000000u64),
+        //         data: Bytes::new(),
+        //     }
+        // ];
     
-        // Build the transaction for the following calls
-        let call_following = wallet_call_contract.executeFromSelf(calls_following);
-        let calldata_following = call_following.calldata().to_owned();
+        // // Build the transaction for the following calls
+        // let call_following = wallet_call_contract.executeFromSelf(calls_following);
+        // let calldata_following = call_following.calldata().to_owned();
     
-        let tx_following = TransactionRequest::default()
-            .with_to(alice.address())
-            .with_authorization_list(vec![signed_authorization])
-            .with_input(calldata_following);
+        // let tx_following = TransactionRequest::default()
+        //     .with_to(alice.address())
+        //     .with_authorization_list(vec![signed_authorization_for_transfer])
+        //     .with_input(calldata_following);
+       
+        // // Send the following transaction
+        // let pending_tx_following = provider.send_transaction(tx_following).await?;
+        // println!("Pending following transaction... {}", pending_tx_following.tx_hash());
+        // let receipt_following = pending_tx_following.get_receipt().await?;
+        // println!("Following calls included in block {}", receipt_following.block_number.expect("Failed to get block number"));
     
-        let provider_alice = ProviderBuilder::new().wallet(alice.clone()).on_http(rpc_url.clone());
-        // Send the following transaction
-        let pending_tx_following = provider_alice.send_transaction(tx_following).await?;
-        println!("Pending following transaction... {}", pending_tx_following.tx_hash());
-        let receipt_following = pending_tx_following.get_receipt().await?;
-        println!("Following calls included in block {}", receipt_following.block_number.expect("Failed to get block number"));
-    
-        println!("random account's balance: {:?}", provider_alice.get_balance(receiver).await?);
+        // println!("random account's balance: {:?}", provider.get_balance(receiver).await?);
     
         Ok(())
 }
