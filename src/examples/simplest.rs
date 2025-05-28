@@ -1,11 +1,11 @@
 use alloy::{
     eips::eip7702::Authorization,
-    primitives::{U256},
-    node_bindings::Anvil,
-    providers::{Provider, ProviderBuilder},
     network::{TransactionBuilder, TransactionBuilder7702},
+    node_bindings::Anvil,
+    primitives::U256,
+    providers::{Provider, ProviderBuilder},
     rpc::types::TransactionRequest,
-    signers::{local::PrivateKeySigner, SignerSync}, 
+    signers::{SignerSync, local::PrivateKeySigner},
     sol,
 };
 use eyre::Result;
@@ -30,7 +30,8 @@ sol!(
     }
 );
 
- /// Example showing how to send an [EIP-7702](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md) transaction.
+/// Example showing how to send an [EIP-7702](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-7702.md) transaction.
+/// provided by alloy-rs https://github.com/alloy-rs/examples/blob/main/examples/transactions/examples/send_eip7702_transaction.rs
 pub async fn make_transaction() -> Result<()> {
     // Spin up a local Anvil node with the Prague hardfork enabled.
     // Ensure `anvil` is available in $PATH.

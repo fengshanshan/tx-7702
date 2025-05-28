@@ -5,6 +5,8 @@ edition = "2024"
 
 [dependencies]
 alloy = { version = "0.12.0", features = ["full", "node-bindings"] }
+alloy-sol-types = "1.1.2"
 dotenv = "0.15.0"
 eyre = "0.6.12"
 tokio = { version = "1.45.0", features = ["rt-multi-thread", "macros"] }
+reqwest = "0.11"
